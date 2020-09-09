@@ -1,0 +1,53 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Fetching files from repo') {
+            steps {
+                git 'https://github.com/devops-cell/deploy.git'
+            }
+        }
+        
+        stage('Copying file to stage') {
+            steps {
+                sh label: '', script: '''sudo cp -r * /home/gitfile/
+                cd /home/gitfile'''
+            }
+        }
+        stage('Deployement') {
+            steps {
+                parallel(
+                a: {
+                  script {
+                    def proda = 
+                    input id: 'proda', 
+                    message: 'deploy in proda?', 
+                    submitter: 'durgesh',  
+                    description: 'deploy in proda?', name: 'proda'
+                    }
+                     sh label: '', script: 'sudo ansible-playbook apache-proda.yml'
+              
+                  },
+                b: {
+                  script {
+                    def prodb = 
+                    input id: 'prodb', 
+                    message: 'deploy in prodb?', 
+                    submitter: 'durgesh', 
+                    description: 'deploy in prodb?', name: 'prodb'
+                    
+                    }
+                    sh label: '', script: 'sudo ansible-playbook apache-prodb.yml'
+                },
+                c: {
+                    sh label: '', script: 'sudo ansible-playbook apache-dev.yml'
+                }
+              )
+            } 
+        }
+
+
+
+
+    }
+}
